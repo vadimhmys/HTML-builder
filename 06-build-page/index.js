@@ -1,6 +1,22 @@
 const fs = require('fs');
 const path = require('path');
 const { readdir } = fs.promises;
+const readline = require('readline');
+
+function readIndex() {
+  const input = fs.createReadStream(path.join(__dirname, 'template.html'), 'utf-8');
+  const output = fs.createWriteStream(path.join(__dirname, 'project-dist', 'index.html'));
+  const rl = readline.createInterface({ input, output });
+
+  rl.on('line', line => {
+    if (line.endsWith('</html>')) {
+      output.write(line);
+      rl.close();
+      return;
+    }
+    output.write(line + '\n');
+  }); 
+}
 
 function createDir(path) {
   fs.mkdir(
@@ -83,6 +99,7 @@ function main() {
   createFile(path.join(__dirname, 'project-dist', 'index.html'));
   createFile(path.join(__dirname, 'project-dist', 'style.css'));
   mergeStyleFiles();
+  readIndex();
 }
 
 main();
