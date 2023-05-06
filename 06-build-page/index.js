@@ -25,15 +25,23 @@ function copyDir(fromHere, there) {
           fs.copyFile(
             path.join(`${fromHere}`, `${dirent.name}`),
             path.join(`${there}`, `${dirent.name}`),
-            (err) => {
-              if (err) console.log('Error Found:', err);
-              console.log(there);
+            error => {
+              if (error) console.log('Error', error.message);
             }
           );
         }
       }
-    
     });
+}
+
+function createFile(path) {
+  fs.writeFile(
+    path,
+    '',
+    error => {
+      if (error) console.log('Error', error.message);
+    }
+  );
 }
 
 function main() {
@@ -43,6 +51,7 @@ function main() {
     path.join(__dirname, 'assets'),
     path.join(__dirname, 'project-dist', 'assets')
   );
+  createFile(path.join(__dirname, 'project-dist', 'index.html'));
   
   
 }
