@@ -10,11 +10,27 @@ function findTemplateTags(str) {
   while (target) {
     let foundPos = str.indexOf(target, pos);
     if (foundPos == -1) break;
-    allPos.push(foundPos);
+    allPos.push(foundPos + 2);
     pos = foundPos + 1;
   }
 
   return allPos;
+}
+
+function getTemplateNames(arr, str) {
+  let allTemplatesNamesInLine = [];
+
+  for (let pos of arr) {
+    let templateName = '';
+    while(allTemplatesNamesInLine) {
+      if (str[pos] === '}') break;
+      templateName += str[pos];
+      pos++;
+    }
+    allTemplatesNamesInLine.push(templateName);
+  }
+
+  return allTemplatesNamesInLine;
 }
 
 function readIndex() {
@@ -23,7 +39,13 @@ function readIndex() {
   const rl = readline.createInterface({ input, output });
 
   rl.on('line', line => {
-    findTemplateTags(line);
+    let templateNames = findTemplateTags(line);
+
+    if (templateNames.length) {
+      let arrTemplateNames = getTemplateNames(templateNames, line);
+      console.log(arrTemplateNames);
+    }
+
     if (line.endsWith('</html>')) {
       output.write(line);
       rl.close();
