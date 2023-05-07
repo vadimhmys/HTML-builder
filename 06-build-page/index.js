@@ -3,12 +3,27 @@ const path = require('path');
 const { readdir } = fs.promises;
 const readline = require('readline');
 
+function findTemplateTags(str) {
+  const target = '{{';
+  let pos = 0;
+  let allPos = [];
+  while (target) {
+    let foundPos = str.indexOf(target, pos);
+    if (foundPos == -1) break;
+    allPos.push(foundPos);
+    pos = foundPos + 1;
+  }
+
+  return allPos;
+}
+
 function readIndex() {
   const input = fs.createReadStream(path.join(__dirname, 'template.html'), 'utf-8');
   const output = fs.createWriteStream(path.join(__dirname, 'project-dist', 'index.html'));
   const rl = readline.createInterface({ input, output });
 
   rl.on('line', line => {
+    findTemplateTags(line);
     if (line.endsWith('</html>')) {
       output.write(line);
       rl.close();
