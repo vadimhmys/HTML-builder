@@ -33,25 +33,70 @@ function getTemplateNames(arr, str) {
   return allTemplatesNamesInLine;
 }
 
-function readIndex() {
+async function copyFileData(files, obj) {
+  
+  for (const file of files) {
+    if (file.name.endsWith('.html') && !file.isDirectory()) {
+      let promise = new Promise((resolve, reject) => {
+        const input = fs.createReadStream(path.join(__dirname, 'components', `${file.name}`), 'utf-8');
+        let data = '';
+        input.on('data', chunk => data += chunk);
+        input.on('end', () => resolve(data));
+        input.on('error', error => reject(error));
+      });
+
+      await promise.then(
+        result => {
+          obj[file.name.slice(0, -5)] = result;
+        },
+        error => console.log('Error', error.message)
+      );
+    }
+  }
+
+}
+
+async function getComponentsData() {
+  const components = {};
+
+  let files = await readdir(
+    path.join(__dirname, 'components'),
+    {withFileTypes: true},
+    error => {
+      if (error) console.log('Error', error.message);
+    }
+  );
+
+  await copyFileData(files, components);
+
+  return components;
+} 
+
+function readIndex(components) {
   const input = fs.createReadStream(path.join(__dirname, 'template.html'), 'utf-8');
   const output = fs.createWriteStream(path.join(__dirname, 'project-dist', 'index.html'));
   const rl = readline.createInterface({ input, output });
 
   rl.on('line', line => {
-    let templateNames = findTemplateTags(line);
-
-    if (templateNames.length) {
-      let arrTemplateNames = getTemplateNames(templateNames, line);
-      console.log(arrTemplateNames);
-    }
-
     if (line.endsWith('</html>')) {
       output.write(line);
       rl.close();
       return;
     }
-    output.write(line + '\n');
+
+    let templateNames = findTemplateTags(line);
+
+    if (templateNames.length) {
+      let arrTemplateNames = getTemplateNames(templateNames, line);
+
+      for (const template of arrTemplateNames) {
+        if (template in components) {
+          output.write(components[template] + '\n');
+        }
+      }
+    } else {
+      output.write(line + '\n');
+    }
   }); 
 }
 
@@ -70,7 +115,7 @@ function copyDir(fromHere, there) {
     fromHere,
     {withFileTypes: true},
     (error, dirents) => {
-      if(error) console.log('Big error', error.message);
+      if(error) console.log('Error', error.message);
       for (const dirent of dirents) {
         if (dirent.isDirectory()) {
           createDir(path.join(`${there}`, `${dirent.name}`));
@@ -136,7 +181,11 @@ function main() {
   createFile(path.join(__dirname, 'project-dist', 'index.html'));
   createFile(path.join(__dirname, 'project-dist', 'style.css'));
   mergeStyleFiles();
-  readIndex();
+  getComponentsData().then(
+    result => readIndex(result),
+    error => console.log('Error', error.message)
+  );
+  
 }
 
 main();
