@@ -25,6 +25,4 @@ fs.readdir(
         }
       );
     }
-
-    //console.log(arr);
   });
